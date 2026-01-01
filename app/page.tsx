@@ -11,8 +11,26 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  // 詳細情報の状態管理
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [date, setDate] = useState('');
+  const [recipientCompany, setRecipientCompany] = useState('');
+  const [recipientName, setRecipientName] = useState('');
+  const [siteName, setSiteName] = useState('');
+  const [ownCompany, setOwnCompany] = useState('');
+  const [ownName, setOwnName] = useState('');
+
   const recipients = ['元請け', 'お客様', '上司', '近隣住民'];
   const reasons = ['遅刻', '破損', '紛失', '工程遅延', '喫煙マナー'];
+
+  // 今日の日付をセット
+  const setToday = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    setDate(`${year}-${month}-${day}`);
+  };
 
   const handleGenerate = async () => {
     if (!details.trim()) {
@@ -35,6 +53,15 @@ export default function Home() {
           reason,
           remorse,
           details,
+          // 詳細情報（任意）
+          detailInfo: {
+            date,
+            recipientCompany,
+            recipientName,
+            siteName,
+            ownCompany,
+            ownName,
+          },
         }),
       });
 
@@ -162,6 +189,115 @@ export default function Home() {
               placeholder="例: 渋滞により現場到着が30分遅れました。事前連絡を怠り、工程に影響を与えてしまいました。"
               className="w-full h-32 md:h-40 p-4 text-base md:text-lg bg-white text-black border-4 border-safety-black rounded-lg focus:outline-none focus:ring-4 focus:ring-safety-black"
             />
+          </div>
+
+          {/* 詳細オプション（トグル） */}
+          <div className="mb-6">
+            <button
+              type="button"
+              onClick={() => setIsDetailOpen(!isDetailOpen)}
+              className="w-full h-14 md:h-16 text-base md:text-lg font-bold bg-safety-black text-safety-yellow rounded-lg border-4 border-safety-black hover:bg-opacity-90 transition-all flex items-center justify-center gap-2"
+            >
+              <span className="transform transition-transform" style={{ display: 'inline-block', transform: isDetailOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                ▼
+              </span>
+              詳細オプション（任意）
+            </button>
+
+            {isDetailOpen && (
+              <div className="mt-4 p-4 bg-white rounded-lg border-4 border-safety-black">
+                {/* 日付入力 */}
+                <div className="mb-4">
+                  <label className="block text-safety-black text-sm md:text-base font-bold mb-2">
+                    📅 日付
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="date"
+                      value={date}
+                      onChange={(e) => setDate(e.target.value)}
+                      className="flex-1 h-12 px-3 text-base bg-white text-black border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-safety-yellow"
+                    />
+                    <button
+                      type="button"
+                      onClick={setToday}
+                      className="h-12 px-4 text-sm md:text-base font-bold bg-safety-yellow text-safety-black rounded-lg border-2 border-safety-black hover:bg-opacity-80 transition-all"
+                    >
+                      今日
+                    </button>
+                  </div>
+                </div>
+
+                {/* 相手先 */}
+                <div className="mb-4">
+                  <label className="block text-safety-black text-sm md:text-base font-bold mb-2">
+                    🏢 相手先（会社名）
+                  </label>
+                  <input
+                    type="text"
+                    value={recipientCompany}
+                    onChange={(e) => setRecipientCompany(e.target.value)}
+                    placeholder="例: ○○建設株式会社"
+                    className="w-full h-12 px-3 text-base bg-white text-black border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-safety-yellow"
+                  />
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-safety-black text-sm md:text-base font-bold mb-2">
+                    👤 相手先（担当者名）
+                  </label>
+                  <input
+                    type="text"
+                    value={recipientName}
+                    onChange={(e) => setRecipientName(e.target.value)}
+                    placeholder="例: 山田太郎"
+                    className="w-full h-12 px-3 text-base bg-white text-black border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-safety-yellow"
+                  />
+                </div>
+
+                {/* 現場名 */}
+                <div className="mb-4">
+                  <label className="block text-safety-black text-sm md:text-base font-bold mb-2">
+                    🏗️ 現場名
+                  </label>
+                  <input
+                    type="text"
+                    value={siteName}
+                    onChange={(e) => setSiteName(e.target.value)}
+                    placeholder="例: ○○マンション新築工事"
+                    className="w-full h-12 px-3 text-base bg-white text-black border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-safety-yellow"
+                  />
+                </div>
+
+                {/* 自分（会社名） */}
+                <div className="mb-4">
+                  <label className="block text-safety-black text-sm md:text-base font-bold mb-2">
+                    🏢 自社名
+                  </label>
+                  <input
+                    type="text"
+                    value={ownCompany}
+                    onChange={(e) => setOwnCompany(e.target.value)}
+                    placeholder="例: △△工業株式会社"
+                    className="w-full h-12 px-3 text-base bg-white text-black border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-safety-yellow"
+                  />
+                </div>
+
+                {/* 自分（氏名） */}
+                <div>
+                  <label className="block text-safety-black text-sm md:text-base font-bold mb-2">
+                    ✍️ 自分の氏名
+                  </label>
+                  <input
+                    type="text"
+                    value={ownName}
+                    onChange={(e) => setOwnName(e.target.value)}
+                    placeholder="例: 佐藤一郎"
+                    className="w-full h-12 px-3 text-base bg-white text-black border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-safety-yellow"
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {/* 生成ボタン */}

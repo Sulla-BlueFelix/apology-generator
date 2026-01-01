@@ -31,10 +31,26 @@ ${details}
 ※ 本文はデモモードで生成されました。実際のAPI連携には .env.local に GOOGLE_GENERATIVE_AI_API_KEY を設定してください。`;
 }
 
+// 詳細情報の型定義
+interface DetailInfo {
+  date?: string;
+  recipientCompany?: string;
+  recipientName?: string;
+  siteName?: string;
+  ownCompany?: string;
+  ownName?: string;
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { recipient, reason, remorse, details } = body;
+    const { recipient, reason, remorse, details, detailInfo } = body as {
+      recipient: string;
+      reason: string;
+      remorse: number;
+      details: string;
+      detailInfo?: DetailInfo;
+    };
 
     // バリデーション
     if (!recipient || !reason || remorse === undefined || !details) {
@@ -61,6 +77,21 @@ export async function POST(request: Request) {
     // プロンプトの構築
     const remorseLevel = remorse < 30 ? '形だけの反省' : remorse < 70 ? '通常の謝罪' : '土下座級の深い反省';
 
+    // 詳細情報の有無をチェック
+    const hasDetailInfo = detailInfo && Object.values(detailInfo).some(v => v && v.trim() !== '');
+
+    // 詳細情報をプロンプトに含める
+    let detailInfoText = '';
+    if (hasDetailInfo && detailInfo) {
+      detailInfoText = '\n\n【詳細情報】';
+      if (detailInfo.date) detailInfoText += `\n- 日付: ${detailInfo.date}`;
+      if (detailInfo.recipientCompany) detailInfoText += `\n- 相手先会社: ${detailInfo.recipientCompany}`;
+      if (detailInfo.recipientName) detailInfoText += `\n- 相手先担当者: ${detailInfo.recipientName}`;
+      if (detailInfo.siteName) detailInfoText += `\n- 現場名: ${detailInfo.siteName}`;
+      if (detailInfo.ownCompany) detailInfoText += `\n- 自社名: ${detailInfo.ownCompany}`;
+      if (detailInfo.ownName) detailInfoText += `\n- 自分の氏名: ${detailInfo.ownName}`;
+    }
+
     const prompt = `あなたは建設・物流現場で働く人のための始末書・詫び状を作成するアシスタントです。
 
 以下の情報をもとに、適切な始末書・詫び状を作成してください：
@@ -68,7 +99,7 @@ export async function POST(request: Request) {
 【宛先】${recipient}
 【理由】${reason}
 【反省度】${remorseLevel}（${remorse}/100）
-【状況詳細】${details}
+【状況詳細】${details}${detailInfoText}
 
 要件：
 - ビジネス文書として適切な敬語を使用
@@ -76,7 +107,8 @@ export async function POST(request: Request) {
 - 建設・物流業界で使われる表現を使用
 - 簡潔で分かりやすい文章
 - 再発防止への言及を含める
-- 400〜600文字程度`;
+- 400〜600文字程度
+${hasDetailInfo ? '- 【詳細情報】が提供されている場合は、文書中の具体的な名前や日付として使用してください（プレースホルダーではなく実際の値を使用）' : '- 具体的な会社名・担当者名・日付などは「○○建設」「○月○日」のようなプレースホルダーを使用してください'}`;
 
     const result = await model.generateContent(prompt);
     const response = result.response;
